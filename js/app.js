@@ -101,16 +101,22 @@ class SocialLeadApp {
     }
 
     // Payment Modal Triggers
+    const openUpgradeModal = () => {
+      if (!window.licenseManager.isPro()) {
+        window.licenseManager.openPaymentModal('Form Pendaftaran & Konfirmasi Berlangganan Paket PRO VIP');
+      } else {
+        this.showToast('Akun Anda Sudah Berstatus PRO VIP Active!', 'success');
+      }
+    };
+
     const btnPlanBadge = document.getElementById('planStatusBadge');
-    if (btnPlanBadge) {
-      btnPlanBadge.addEventListener('click', () => {
-        if (!window.licenseManager.isPro()) {
-          window.licenseManager.openPaymentModal('Aktifkan Paket PRO VIP untuk Akses Download & Ekstraksi Tanpa Batas');
-        } else {
-          this.showToast('Akun Anda Sudah Berstatus PRO VIP Active!', 'success');
-        }
-      });
-    }
+    if (btnPlanBadge) btnPlanBadge.addEventListener('click', openUpgradeModal);
+
+    const btnUpgradeProNav = document.getElementById('btnUpgradeProNav');
+    if (btnUpgradeProNav) btnUpgradeProNav.addEventListener('click', openUpgradeModal);
+
+    const btnUpgradeBanner = document.getElementById('btnUpgradeBanner');
+    if (btnUpgradeBanner) btnUpgradeBanner.addEventListener('click', openUpgradeModal);
 
     const btnSubmitActivationRequest = document.getElementById('btnSubmitActivationRequest');
     if (btnSubmitActivationRequest) {

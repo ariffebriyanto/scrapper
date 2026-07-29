@@ -38,17 +38,34 @@
       </div>
 
       <div class="nav-actions">
+        <button id="btnUpgradeProNav" class="btn-primary" style="padding: 0.45rem 1rem; font-size: 0.85rem; background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);">
+          <i class="fas fa-crown"></i> Berlangganan PRO VIP
+        </button>
         <div id="planStatusBadge" class="plan-badge free" title="Klik untuk Berlangganan & Buka Kunci">
           <i class="fas fa-lock"></i> FREE PLAN (Download Terkunci)
         </div>
         <button id="btnAdminToggle" class="btn-admin-toggle">
-          <i class="fas fa-user-shield"></i> Admin / Lisensi
+          <i class="fas fa-user-shield"></i> Admin / Owner
         </button>
       </div>
     </header>
 
     <!-- Main Content Body -->
     <main class="main-content">
+      
+      <!-- Callout Banner For Subscribing -->
+      <div id="freeBannerCallout" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(59, 130, 246, 0.15)); border: 1px dashed var(--warning); border-radius: var(--radius-md); padding: 0.9rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <i class="fas fa-crown" style="font-size: 1.8rem; color: var(--warning);"></i>
+          <div>
+            <div style="font-weight: 800; color: white; font-size: 0.95rem;">Ingin Mendownload Excel, PDF & Direct Chat WA Tanpa Batas?</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Nikmati akses fitur eksklusif PRO VIP hanya Rp 99.000 seumur hidup!</div>
+          </div>
+        </div>
+        <button id="btnUpgradeBanner" class="btn-primary" style="background: linear-gradient(135deg, #f59e0b, #d97706); font-size: 0.85rem; padding: 0.55rem 1.2rem;">
+          <i class="fas fa-gift"></i> Isi Form Berlangganan VIP
+        </button>
+      </div>
       
       <!-- Scraper Controls Card -->
       <section class="glass-card">

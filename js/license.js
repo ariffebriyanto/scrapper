@@ -126,6 +126,8 @@ class SubscriptionLicenseManager {
     const exportBtnExcel = document.getElementById('btnExportExcel');
     const exportBtnPdf = document.getElementById('btnExportPdf');
     const adminIndicator = document.getElementById('adminIndicator');
+    const freeBanner = document.getElementById('freeBannerCallout');
+    const navUpgradeBtn = document.getElementById('btnUpgradeProNav');
 
     if (badgeEl) {
       if (this.isPro()) {
@@ -134,6 +136,18 @@ class SubscriptionLicenseManager {
       } else {
         badgeEl.className = 'plan-badge free';
         badgeEl.innerHTML = '<i class="fas fa-lock"></i> FREE PLAN (Download Terkunci)';
+      }
+    }
+
+    if (freeBanner) {
+      freeBanner.style.display = this.isPro() ? 'none' : 'flex';
+    }
+
+    if (navUpgradeBtn) {
+      if (this.isPro()) {
+        navUpgradeBtn.style.display = 'none';
+      } else {
+        navUpgradeBtn.style.display = 'inline-flex';
       }
     }
 
