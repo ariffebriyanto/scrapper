@@ -51,9 +51,9 @@ class SubscriptionLicenseManager {
   getPendingTransfers() {
     const raw = localStorage.getItem(this.PENDING_TRANSPERS_KEY);
     if (!raw) {
-      // Seed sample pending request if empty
+      // Seed initial sample request for demonstration
       const sample = [
-        { id: 'tr-1', name: 'Budi Santoso', bank: 'BCA (2140639403)', amount: 'Rp 99.000', date: new Date().toLocaleString('id-ID'), status: 'PENDING' }
+        { id: 'tr-1', name: 'Budi Santoso', phone: '081299887766', bank: 'BCA (2140639403)', amount: 'Rp 99.000', date: new Date().toLocaleString('id-ID'), status: 'PENDING' }
       ];
       localStorage.setItem(this.PENDING_TRANSPERS_KEY, JSON.stringify(sample));
       return sample;
@@ -61,11 +61,12 @@ class SubscriptionLicenseManager {
     return JSON.parse(raw);
   }
 
-  addPendingTransfer(userName = 'Pembeli Baru') {
+  addPendingTransfer(userName = 'Pembeli Baru', userPhone = '-') {
     const list = this.getPendingTransfers();
     const newReq = {
       id: `tr-${Date.now()}`,
       name: userName,
+      phone: userPhone,
       bank: 'BCA / GoPay',
       amount: 'Rp 99.000',
       date: new Date().toLocaleString('id-ID'),
@@ -202,21 +203,26 @@ class SubscriptionLicenseManager {
     }
 
     container.innerHTML = list.map(item => `
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); border-radius: var(--radius-md); margin-bottom: 0.5rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); border-radius: var(--radius-md); margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
         <div>
-          <div style="font-weight: 700; color: white; font-size: 0.88rem;">${item.name}</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted);">${item.bank} • ${item.amount} • <span style="color: var(--cyan);">${item.date}</span></div>
+          <div style="font-weight: 700; color: white; font-size: 0.88rem;">${item.name} <span style="font-size: 0.75rem; font-weight: normal; color: var(--cyan);">(${item.phone || '-'})</span></div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">${item.bank} • ${item.amount} • ${item.date}</div>
         </div>
         <div style="display: flex; gap: 0.4rem; align-items: center;">
+          ${item.phone && item.phone !== '-' ? `
+            <a href="https://wa.me/${item.phone.replace(/[^0-9]/g, '')}" target="_blank" class="btn-secondary" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; color: #34d399; border-color: rgba(16,185,129,0.3);">
+              <i class="fab fa-whatsapp"></i> Chat
+            </a>
+          ` : ''}
           ${item.status === 'APPROVED' ? `
             <span class="badge" style="background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.4);">
-              <i class="fas fa-check-circle"></i> SUDAH DI-APPROVE
+              <i class="fas fa-check-circle"></i> TER-APPROVE
             </span>
           ` : `
             <button class="btn-primary btn-approve-tr" data-id="${item.id}" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; background: linear-gradient(135deg, #10b981, #059669);">
-              <i class="fas fa-check"></i> Approve
+              <i class="fas fa-check"></i> Approve Aktivasi
             </button>
-            <button class="btn-secondary btn-reject-tr" data-id="${item.id}" style="padding: 0.35rem 0.6rem; font-size: 0.78rem; color: var(--danger); border-color: rgba(239,68,68,0.3);">
+            <button class="btn-secondary btn-reject-tr" data-id="${item.id}" style="padding: 0.35rem 0.6rem; font-size: 0.78rem; color: var(--danger); border-color: rgba(239,68,68,0.3);" title="Hapus">
               <i class="fas fa-trash"></i>
             </button>
           `}
@@ -229,7 +235,7 @@ class SubscriptionLicenseManager {
       btn.addEventListener('click', (e) => {
         const id = btn.dataset.id;
         this.approveTransfer(id);
-        window.app.showToast('Transfer Berhasil Di-Approve! Akses PRO VIP Aktif.', 'success');
+        window.app.showToast('Aktivasi Berhasil Di-Approve! Fitur Pembeli Unlocked PRO.', 'success');
         this.renderPendingTransfersTable();
       });
     });

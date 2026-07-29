@@ -112,6 +112,27 @@ class SocialLeadApp {
       });
     }
 
+    const btnSubmitActivationRequest = document.getElementById('btnSubmitActivationRequest');
+    if (btnSubmitActivationRequest) {
+      btnSubmitActivationRequest.addEventListener('click', (e) => {
+        e.preventDefault();
+        const userName = (document.getElementById('userSubmitName')?.value || '').trim();
+        const userPhone = (document.getElementById('userSubmitPhone')?.value || '').trim();
+
+        if (!userName || !userPhone) {
+          this.showToast('Silakan lengkapi Nama & Nomor WhatsApp Anda!', 'warning');
+          return;
+        }
+
+        window.licenseManager.addPendingTransfer(userName, userPhone);
+        this.showToast(`Form Pengajuan Aktivasi atas nama "${userName}" berhasil dikirim ke Admin!`, 'success');
+        
+        // Open WhatsApp admin as fallback confirmation
+        const waText = encodeURIComponent(`Halo Admin ARIF SOFT, saya ${userName} (${userPhone}) telah mengirim form aktivasi & bukti transfer. Mohon bantu approve aktivasi.`);
+        window.open(`https://wa.me/${window.licenseManager.paymentInfo.waAdmin}?text=${waText}`, '_blank');
+      });
+    }
+
     const btnWaConfirmPayment = document.getElementById('btnWaConfirmPayment');
     if (btnWaConfirmPayment) {
       btnWaConfirmPayment.addEventListener('click', () => {
