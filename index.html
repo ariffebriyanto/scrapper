@@ -335,10 +335,19 @@
       </div>
 
       <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
+        <div style="font-weight: 700; color: white; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+          <i class="fas fa-clock" style="color: var(--warning);"></i> Daftar Permintaan Transfer Pembeli (Pending Approval)
+        </div>
+        <div id="adminPendingList">
+          <!-- Pending items rendered via license.js -->
+        </div>
+      </div>
+
+      <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>
             <div style="font-weight: 700; color: white;">Status Lisensi Perangkat Ini</div>
-            <div style="font-size: 0.78rem; color: var(--text-muted);">Aktifkan untuk membuka fitur download PDF & Excel langsung</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">Aktifkan/nonaktifkan status PRO VIP secara manual</div>
           </div>
           <label style="position: relative; display: inline-block; width: 50px; height: 26px;">
             <input type="checkbox" id="adminStatusToggle" style="opacity: 0; width: 0; height: 0;">

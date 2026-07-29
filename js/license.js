@@ -6,7 +6,8 @@
 class SubscriptionLicenseManager {
   constructor() {
     this.STORAGE_KEY = 'sociallead_license_status';
-    this.ADMIN_PIN = '1234';
+    this.PENDING_TRANSPERS_KEY = 'sociallead_pending_transfers';
+    this.ADMIN_PIN = 'Puloma5.3';
     
     // Default Owner Payment Settings (Updated with user's actual accounts)
     this.paymentInfo = {
@@ -47,10 +48,55 @@ class SubscriptionLicenseManager {
     return { success: true, message: 'Selamat! Akun Anda Berhasil Diaktifkan ke Status PRO VIP.' };
   }
 
-  deactivatePro() {
-    this.status = 'FREE';
-    localStorage.setItem(this.STORAGE_KEY, 'FREE');
-    this.updateUI();
+  getPendingTransfers() {
+    const raw = localStorage.getItem(this.PENDING_TRANSPERS_KEY);
+    if (!raw) {
+      // Seed sample pending request if empty
+      const sample = [
+        { id: 'tr-1', name: 'Budi Santoso', bank: 'BCA (2140639403)', amount: 'Rp 99.000', date: new Date().toLocaleString('id-ID'), status: 'PENDING' }
+      ];
+      localStorage.setItem(this.PENDING_TRANSPERS_KEY, JSON.stringify(sample));
+      return sample;
+    }
+    return JSON.parse(raw);
+  }
+
+  addPendingTransfer(userName = 'Pembeli Baru') {
+    const list = this.getPendingTransfers();
+    const newReq = {
+      id: `tr-${Date.now()}`,
+      name: userName,
+      bank: 'BCA / GoPay',
+      amount: 'Rp 99.000',
+      date: new Date().toLocaleString('id-ID'),
+      status: 'PENDING'
+    };
+    list.unshift(newReq);
+    localStorage.setItem(this.PENDING_TRANSPERS_KEY, JSON.stringify(list));
+    return newReq;
+  }
+
+  approveTransfer(id) {
+    const list = this.getPendingTransfers();
+    const item = list.find(t => t.id === id);
+    if (item) {
+      item.status = 'APPROVED';
+      localStorage.setItem(this.PENDING_TRANSPERS_KEY, JSON.stringify(list));
+      this.activatePro('ADMIN-PASSED');
+      return true;
+    }
+    return false;
+  }
+
+  rejectTransfer(id) {
+    const list = this.getPendingTransfers();
+    const idx = list.findIndex(t => t.id === id);
+    if (idx !== -1) {
+      list.splice(idx, 1);
+      localStorage.setItem(this.PENDING_TRANSPERS_KEY, JSON.stringify(list));
+      return true;
+    }
+    return false;
   }
 
   validateKey(key) {
@@ -137,11 +183,65 @@ class SubscriptionLicenseManager {
 
     // Refresh current values in form
     document.getElementById('adminStatusToggle').checked = this.isPro();
-    document.getElementById('adminBcaInput').value = this.paymentInfo.bankBca;
-    document.getElementById('adminMandiriInput').value = this.paymentInfo.bankMandiri;
-    document.getElementById('adminWaInput').value = this.paymentInfo.waAdmin;
+    document.getElementById('adminBcaInput') ? document.getElementById('adminBcaInput').value = this.paymentInfo.bankBca : null;
+    document.getElementById('adminWaInput') ? document.getElementById('adminWaInput').value = this.paymentInfo.waAdmin : null;
+
+    this.renderPendingTransfersTable();
 
     modal.classList.add('active');
+  }
+
+  renderPendingTransfersTable() {
+    const container = document.getElementById('adminPendingList');
+    if (!container) return;
+
+    const list = this.getPendingTransfers();
+    if (list.length === 0) {
+      container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 1rem; font-size: 0.82rem;">Tidak ada permintaan transfer yang menggantung (pending).</div>`;
+      return;
+    }
+
+    container.innerHTML = list.map(item => `
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); border-radius: var(--radius-md); margin-bottom: 0.5rem;">
+        <div>
+          <div style="font-weight: 700; color: white; font-size: 0.88rem;">${item.name}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">${item.bank} • ${item.amount} • <span style="color: var(--cyan);">${item.date}</span></div>
+        </div>
+        <div style="display: flex; gap: 0.4rem; align-items: center;">
+          ${item.status === 'APPROVED' ? `
+            <span class="badge" style="background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.4);">
+              <i class="fas fa-check-circle"></i> SUDAH DI-APPROVE
+            </span>
+          ` : `
+            <button class="btn-primary btn-approve-tr" data-id="${item.id}" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; background: linear-gradient(135deg, #10b981, #059669);">
+              <i class="fas fa-check"></i> Approve
+            </button>
+            <button class="btn-secondary btn-reject-tr" data-id="${item.id}" style="padding: 0.35rem 0.6rem; font-size: 0.78rem; color: var(--danger); border-color: rgba(239,68,68,0.3);">
+              <i class="fas fa-trash"></i>
+            </button>
+          `}
+        </div>
+      </div>
+    `).join('');
+
+    // Event handlers for approve/reject buttons
+    container.querySelectorAll('.btn-approve-tr').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = btn.dataset.id;
+        this.approveTransfer(id);
+        window.app.showToast('Transfer Berhasil Di-Approve! Akses PRO VIP Aktif.', 'success');
+        this.renderPendingTransfersTable();
+      });
+    });
+
+    container.querySelectorAll('.btn-reject-tr').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = btn.dataset.id;
+        this.rejectTransfer(id);
+        window.app.showToast('Permintaan transfer berhasil dihapus.', 'info');
+        this.renderPendingTransfersTable();
+      });
+    });
   }
 
   closeAdminModal() {

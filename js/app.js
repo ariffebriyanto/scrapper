@@ -112,6 +112,15 @@ class SocialLeadApp {
       });
     }
 
+    const btnWaConfirmPayment = document.getElementById('btnWaConfirmPayment');
+    if (btnWaConfirmPayment) {
+      btnWaConfirmPayment.addEventListener('click', () => {
+        const userName = prompt('Masukkan Nama Anda (Untuk Catatan Konfirmasi Transfer Admin):') || 'Pembeli Baru';
+        window.licenseManager.addPendingTransfer(userName);
+        this.showToast('Permintaan Konfirmasi Transfer Telah Dikirim ke Panel Admin!', 'info');
+      });
+    }
+
     const btnClosePaymentModal = document.getElementById('btnClosePaymentModal');
     if (btnClosePaymentModal) {
       btnClosePaymentModal.addEventListener('click', () => {
@@ -139,11 +148,11 @@ class SocialLeadApp {
     const btnAdminToggle = document.getElementById('btnAdminToggle');
     if (btnAdminToggle) {
       btnAdminToggle.addEventListener('click', () => {
-        const pin = prompt('Masukkan PIN Admin / Owner (Default PIN: 1234):');
-        if (pin === '1234' || pin === 'admin') {
+        const pin = prompt('Masukkan Password Admin / Owner:');
+        if (pin === window.licenseManager.ADMIN_PIN) {
           window.licenseManager.openAdminModal();
         } else if (pin !== null) {
-          this.showToast('PIN Admin Salah!', 'error');
+          this.showToast('Password Admin Salah!', 'error');
         }
       });
     }
