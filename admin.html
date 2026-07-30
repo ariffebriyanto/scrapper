@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARIF SOFT - Admin & Owner Portal</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin-login-card {
+      max-width: 420px;
+      margin: 4rem auto;
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem 2rem;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      text-align: center;
+    }
+
+    .admin-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: rgba(11, 15, 25, 0.9);
+      border-bottom: 1px solid var(--border-glass);
+    }
+
+    .admin-table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Password Login Screen (Shown when not authenticated) -->
+  <div id="adminLoginScreen" class="app-container">
+    <div class="admin-login-card">
+      <img src="assets/logo.jpg" alt="ARIF SOFT Logo" style="height: 60px; margin-bottom: 1rem; border-radius: 8px; background: white; padding: 4px;">
+      <h2 style="color: white; font-weight: 800; margin-bottom: 0.25rem;">ARIF SOFT Admin Portal</h2>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.5rem;">Masukkan Password Owner untuk Mengakses Dashboard</p>
+
+      <form id="adminLoginForm">
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <input type="password" id="adminPasswordInput" class="form-input" placeholder="Masukkan Password Admin" required style="text-align: center; font-size: 1.1rem; letter-spacing: 2px;">
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 0.85rem;">
+          <i class="fas fa-lock-open"></i> Masuk Ke Panel Admin
+        </button>
+      </form>
+      <div style="margin-top: 1.5rem;">
+        <a href="index.html" style="color: var(--cyan); text-decoration: none; font-size: 0.85rem;">
+          <i class="fas fa-arrow-left"></i> Kembali ke Aplikasi Scraper
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Dashboard Container (Shown after successful login) -->
+  <div id="adminDashboardScreen" class="app-container" style="display: none;">
+    <!-- Top Admin Header -->
+    <header class="admin-nav">
+      <div class="brand">
+        <img src="assets/logo.jpg" alt="ARIF SOFT Logo" style="height: 40px; border-radius: 6px; background: white; padding: 2px;">
+        <div>
+          <h2 style="font-size: 1.1rem; color: white;">ARIF SOFT - Owner Control Center</h2>
+          <p style="font-size: 0.75rem; color: var(--text-muted);">Kelola Pembayaran, Approval VIP, & Pengguna</p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <a href="index.html" class="btn-secondary" style="text-decoration: none; font-size: 0.82rem;">
+          <i class="fas fa-external-link-alt"></i> Buka Web Scraper
+        </a>
+        <button id="btnAdminLogout" class="btn-secondary" style="color: var(--danger); border-color: rgba(239,68,68,0.3); font-size: 0.82rem;">
+          <i class="fas fa-sign-out-alt"></i> Keluar
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Admin Body -->
+    <main class="main-content">
+      
+      <!-- Metrics Overview -->
+      <div class="stats-grid" style="margin-bottom: 1.5rem;">
+        <div class="stat-card">
+          <div class="stat-icon address">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-info">
+            <h3 id="admStatPending">0</h3>
+            <p>Pending Approval Transfer</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon wa">
+            <i class="fas fa-user-check"></i>
+          </div>
+          <div class="stat-info">
+            <h3 id="admStatPro">0</h3>
+            <p>Pengguna PRO VIP Aktif</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon total">
+            <i class="fas fa-users"></i>
+          </div>
+          <div class="stat-info">
+            <h3 id="admStatUsers">0</h3>
+            <p>Total Pengguna Terdaftar</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 1: Pending Transfers Approval Table -->
+      <div class="admin-table-container">
+        <div class="section-header">
+          <div class="section-title">
+            <i class="fas fa-money-bill-wave" style="color: var(--success);"></i>
+            <h2>Daftar Permintaan Transfer Pembeli (Pending Approval)</h2>
+          </div>
+          <span style="font-size: 0.78rem; color: var(--text-muted);">Klik Approve untuk langsung mengaktifkan VIP pembeli</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Nama Pembeli</th>
+                <th>No WhatsApp</th>
+                <th>Paket Yang Dipilih</th>
+                <th>Total Bayar</th>
+                <th>Tanggal Pengajuan</th>
+                <th>Status / Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="adminPendingTableBody">
+              <!-- Rendered via js/admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section 2: Registered Users Management Table -->
+      <div class="admin-table-container">
+        <div class="section-header">
+          <div class="section-title">
+            <i class="fas fa-users-cog" style="color: var(--cyan);"></i>
+            <h2>Kelola Seluruh Pengguna Terdaftar</h2>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Nama Lengkap</th>
+                <th>Email</th>
+                <th>No WhatsApp</th>
+                <th>Tanggal Daftar</th>
+                <th>Masa Aktif VIP</th>
+                <th>Status / Toggle Manual</th>
+              </tr>
+            </thead>
+            <tbody id="adminUsersTableBody">
+              <!-- Rendered via js/admin.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section 3: VIP License Key Generator -->
+      <div class="admin-table-container">
+        <div class="section-header">
+          <div class="section-title">
+            <i class="fas fa-key" style="color: var(--warning);"></i>
+            <h2>Generator Kode Lisensi VIP</h2>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; align-items: center; max-width: 500px;">
+          <input type="text" id="admGeneratedKey" class="form-input" readonly placeholder="Klik Buat Kode Lisensi">
+          <button id="btnAdmGenerateKey" class="btn-primary" style="white-space: nowrap;">
+            <i class="fas fa-magic"></i> Generate Key
+          </button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- JavaScript Modules -->
+  <script src="js/license.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

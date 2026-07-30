@@ -100,12 +100,64 @@ class SocialLeadApp {
       });
     }
 
-    // Payment Modal Triggers
-    const openUpgradeModal = () => {
-      if (!window.licenseManager.isPro()) {
-        window.licenseManager.openPaymentModal('Form Pendaftaran & Konfirmasi Berlangganan Paket PRO VIP');
+    // User Account Register & Logout Handlers
+    const btnUserAuthNav = document.getElementById('btnUserAuthNav');
+    const btnUserLogoutNav = document.getElementById('btnUserLogoutNav');
+    const registerModal = document.getElementById('registerModal');
+    const btnCloseRegisterModal = document.getElementById('btnCloseRegisterModal');
+
+    const updateNavUserStatus = () => {
+      const currUser = (window.licenseManager && window.licenseManager.getCurrentUser) ? window.licenseManager.getCurrentUser() : null;
+      const userText = document.getElementById('userAuthNavText');
+      if (currUser && userText) {
+        userText.innerText = `${currUser.name} (${currUser.status})`;
+        if (btnUserLogoutNav) btnUserLogoutNav.style.display = 'inline-flex';
       } else {
-        this.showToast('Akun Anda Sudah Berstatus PRO VIP Active!', 'success');
+        if (userText) userText.innerText = 'Daftar / Login';
+        if (btnUserLogoutNav) btnUserLogoutNav.style.display = 'none';
+      }
+    };
+    updateNavUserStatus();
+
+    if (btnUserLogoutNav) {
+      btnUserLogoutNav.addEventListener('click', () => {
+        window.licenseManager.logoutUser();
+        this.showToast('Berhasil keluar dari akun.', 'info');
+        updateNavUserStatus();
+        this.renderTable();
+      });
+    }
+
+    if (btnUserAuthNav) {
+      btnUserAuthNav.addEventListener('click', () => {
+        if (registerModal) registerModal.classList.add('active');
+      });
+    }
+
+    if (btnCloseRegisterModal) {
+      btnCloseRegisterModal.addEventListener('click', () => {
+        if (registerModal) registerModal.classList.remove('active');
+      });
+    }
+
+    // Payment Modal Triggers (Enforces Registration First!)
+    const openUpgradeModal = () => {
+      const currUser = window.licenseManager.getCurrentUser();
+
+      // Step 1: If user is not logged in/registered, FORCE registration modal first!
+      if (!currUser) {
+        this.showToast('Silakan daftar akun terlebih dahulu sebelum memilih paket berlangganan!', 'info');
+        if (registerModal) registerModal.classList.add('active');
+        return;
+      }
+
+      // Step 2: If user is registered but FREE, open Payment Modal with user details pre-filled
+      if (!window.licenseManager.isPro()) {
+        window.licenseManager.openPaymentModal(`Form Berlangganan VIP untuk Akun: ${currUser.name}`);
+        if (document.getElementById('userSubmitName')) document.getElementById('userSubmitName').value = currUser.name;
+        if (document.getElementById('userSubmitPhone')) document.getElementById('userSubmitPhone').value = currUser.phone;
+      } else {
+        this.showToast(`Akun ${currUser.name} Sudah Berstatus PRO VIP Active!`, 'success');
       }
     };
 
@@ -118,23 +170,66 @@ class SocialLeadApp {
     const btnUpgradeBanner = document.getElementById('btnUpgradeBanner');
     if (btnUpgradeBanner) btnUpgradeBanner.addEventListener('click', openUpgradeModal);
 
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+      registerForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('regName').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const phone = document.getElementById('regPhone').value.trim();
+
+        const res = window.licenseManager.registerUser(name, email, phone);
+        if (res.success) {
+          this.showToast(res.message, 'success');
+          if (registerModal) registerModal.classList.remove('active');
+          updateNavUserStatus();
+          this.renderTable();
+
+          // Automatically proceed to Payment Modal right after registering!
+          setTimeout(() => {
+            openUpgradeModal();
+          }, 300);
+        }
+      });
+    }
+
+    // Pricing Plan Card Selection Event Handlers
+    const planOptions = document.querySelectorAll('.plan-card-option');
+    planOptions.forEach(card => {
+      card.addEventListener('click', () => {
+        planOptions.forEach(c => {
+          c.classList.remove('active-plan');
+          c.style.border = '1px solid var(--border-glass)';
+          c.style.background = 'rgba(255,255,255,0.03)';
+        });
+        card.classList.add('active-plan');
+        card.style.border = '2px solid var(--warning)';
+        card.style.background = 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(139, 92, 246, 0.2))';
+        const radio = card.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+      });
+    });
+
     const btnSubmitActivationRequest = document.getElementById('btnSubmitActivationRequest');
     if (btnSubmitActivationRequest) {
       btnSubmitActivationRequest.addEventListener('click', (e) => {
         e.preventDefault();
         const userName = (document.getElementById('userSubmitName')?.value || '').trim();
         const userPhone = (document.getElementById('userSubmitPhone')?.value || '').trim();
+        const selectedRadio = document.querySelector('input[name="subPlanSelect"]:checked');
+        const planKey = selectedRadio ? selectedRadio.value : '1_year';
 
         if (!userName || !userPhone) {
           this.showToast('Silakan lengkapi Nama & Nomor WhatsApp Anda!', 'warning');
           return;
         }
 
-        window.licenseManager.addPendingTransfer(userName, userPhone);
-        this.showToast(`Form Pengajuan Aktivasi atas nama "${userName}" berhasil dikirim ke Admin!`, 'success');
+        const planObj = window.licenseManager.plans[planKey] || window.licenseManager.plans['1_year'];
+        window.licenseManager.addPendingTransfer(userName, userPhone, planKey);
+        this.showToast(`Form Pengajuan Paket ${planObj.name} (${planObj.price}) berhasil dikirim ke Admin!`, 'success');
         
         // Open WhatsApp admin as fallback confirmation
-        const waText = encodeURIComponent(`Halo Admin ARIF SOFT, saya ${userName} (${userPhone}) telah mengirim form aktivasi & bukti transfer. Mohon bantu approve aktivasi.`);
+        const waText = encodeURIComponent(`Halo Admin ARIF SOFT, saya ${userName} (${userPhone}) telah mengirim konfirmasi transfer Paket ${planObj.name} (${planObj.price}). Mohon bantu approve aktivasi.`);
         window.open(`https://wa.me/${window.licenseManager.paymentInfo.waAdmin}?text=${waText}`, '_blank');
       });
     }

@@ -6,10 +6,12 @@
 class SubscriptionLicenseManager {
   constructor() {
     this.STORAGE_KEY = 'sociallead_license_status';
+    this.USERS_KEY = 'sociallead_registered_users';
+    this.CURRENT_USER_KEY = 'sociallead_current_user';
     this.PENDING_TRANSPERS_KEY = 'sociallead_pending_transfers';
     this.ADMIN_PIN = 'Puloma5.3';
     
-    // Default Owner Payment Settings (Updated with user's actual accounts)
+    // Owner Payment Settings
     this.paymentInfo = {
       bankBca: '2140639403',
       bankBcaName: 'Arif Febriyanto',
@@ -17,8 +19,15 @@ class SubscriptionLicenseManager {
       bankMandiriName: 'Arif Febriyanto (BCA)',
       danaOvo: '082113842783',
       danaOvoName: 'Arif Febriyanto (GoPay/DANA)',
-      waAdmin: '6282113842783',
-      price: 'Rp 99.000 / Seumur Hidup'
+      waAdmin: '6282113842783'
+    };
+
+    // Pricing tiers definition
+    this.plans = {
+      '1_month': { name: '1 Bulan', price: 'Rp 150.000', days: 30 },
+      '3_months': { name: '3 Bulan', price: 'Rp 400.000', days: 90 },
+      '6_months': { name: '6 Bulan', price: 'Rp 800.000', days: 180 },
+      '1_year': { name: '1 Tahun (Paling Hemat)', price: 'Rp 1.000.000', days: 365 }
     };
 
     // Valid promo / VIP keys
@@ -33,19 +42,82 @@ class SubscriptionLicenseManager {
     this.updateUI();
   }
 
+  registerUser(name, email, phone) {
+    const users = this.getRegisteredUsers();
+    const existing = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    
+    if (existing) {
+      localStorage.setItem(this.CURRENT_USER_KEY, JSON.stringify(existing));
+      this.updateUI();
+      return { success: true, user: existing, isNew: false, message: `Selamat datang kembali, ${existing.name}!` };
+    }
+
+    const newUser = {
+      id: `usr-${Date.now()}`,
+      name: name,
+      email: email,
+      phone: phone,
+      status: 'FREE', // Default status = FREE
+      registeredAt: new Date().toLocaleDateString('id-ID'),
+      vipExpiresAt: null
+    };
+
+    users.push(newUser);
+    localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
+    localStorage.setItem(this.CURRENT_USER_KEY, JSON.stringify(newUser));
+    this.updateUI();
+    return { success: true, user: newUser, isNew: true, message: `Pendaftaran berhasil! Akun Anda berstatus FREE PLAN.` };
+  }
+
+  getRegisteredUsers() {
+    const raw = localStorage.getItem(this.USERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }
+
+  getCurrentUser() {
+    const raw = localStorage.getItem(this.CURRENT_USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }
+
+  logoutUser() {
+    localStorage.removeItem(this.CURRENT_USER_KEY);
+    this.status = 'FREE';
+    localStorage.setItem(this.STORAGE_KEY, 'FREE');
+    this.updateUI();
+  }
+
   isPro() {
+    const currUser = this.getCurrentUser();
+    if (currUser && currUser.status === 'PRO') return true;
     return this.status === 'PRO';
   }
 
-  activatePro(licenseKey = null) {
-    if (licenseKey && !this.validateKey(licenseKey)) {
-      return { success: false, message: 'Kode Lisensi Tidak Valid atau Kadaluarsa!' };
+  activatePro(licenseKey = null, planKey = '1_year') {
+    const currUser = this.getCurrentUser();
+    const targetPlan = this.plans[planKey] || this.plans['1_year'];
+    const expDate = new Date();
+    expDate.setDate(expDate.getDate() + targetPlan.days);
+    const expDateStr = expDate.toLocaleDateString('id-ID');
+
+    if (currUser) {
+      currUser.status = 'PRO';
+      currUser.vipExpiresAt = expDateStr;
+      currUser.planName = targetPlan.name;
+      localStorage.setItem(this.CURRENT_USER_KEY, JSON.stringify(currUser));
+
+      // Update in registered users array
+      const users = this.getRegisteredUsers();
+      const idx = users.findIndex(u => u.id === currUser.id);
+      if (idx !== -1) {
+        users[idx] = currUser;
+        localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
+      }
     }
-    
+
     this.status = 'PRO';
     localStorage.setItem(this.STORAGE_KEY, 'PRO');
     this.updateUI();
-    return { success: true, message: 'Selamat! Akun Anda Berhasil Diaktifkan ke Status PRO VIP.' };
+    return { success: true, message: `Selamat! Paket PRO VIP ${targetPlan.name} Berhasil Diaktifkan s.d. ${expDateStr}.` };
   }
 
   getPendingTransfers() {
@@ -53,7 +125,7 @@ class SubscriptionLicenseManager {
     if (!raw) {
       // Seed initial sample request for demonstration
       const sample = [
-        { id: 'tr-1', name: 'Budi Santoso', phone: '081299887766', bank: 'BCA (2140639403)', amount: 'Rp 99.000', date: new Date().toLocaleString('id-ID'), status: 'PENDING' }
+        { id: 'tr-1', name: 'Budi Santoso', phone: '081299887766', planKey: '1_year', planName: '1 Tahun (Paling Hemat)', amount: 'Rp 1.000.000', date: new Date().toLocaleString('id-ID'), status: 'PENDING' }
       ];
       localStorage.setItem(this.PENDING_TRANSPERS_KEY, JSON.stringify(sample));
       return sample;
@@ -61,14 +133,17 @@ class SubscriptionLicenseManager {
     return JSON.parse(raw);
   }
 
-  addPendingTransfer(userName = 'Pembeli Baru', userPhone = '-') {
+  addPendingTransfer(userName = 'Pembeli Baru', userPhone = '-', planKey = '1_year') {
     const list = this.getPendingTransfers();
+    const plan = this.plans[planKey] || this.plans['1_year'];
     const newReq = {
       id: `tr-${Date.now()}`,
       name: userName,
       phone: userPhone,
+      planKey: planKey,
+      planName: plan.name,
+      amount: plan.price,
       bank: 'BCA / GoPay',
-      amount: 'Rp 99.000',
       date: new Date().toLocaleString('id-ID'),
       status: 'PENDING'
     };
@@ -83,7 +158,7 @@ class SubscriptionLicenseManager {
     if (item) {
       item.status = 'APPROVED';
       localStorage.setItem(this.PENDING_TRANSPERS_KEY, JSON.stringify(list));
-      this.activatePro('ADMIN-PASSED');
+      this.activatePro('ADMIN-PASSED', item.planKey || '1_year');
       return true;
     }
     return false;
@@ -173,16 +248,24 @@ class SubscriptionLicenseManager {
     const modal = document.getElementById('paymentModal');
     if (!modal) return;
 
-    document.getElementById('paymentModalReason').innerText = reason;
-    document.getElementById('bcaNumber').innerText = this.paymentInfo.bankBca;
-    document.getElementById('bcaName').innerText = this.paymentInfo.bankBcaName;
-    document.getElementById('mandiriNumber').innerText = this.paymentInfo.bankMandiri;
-    document.getElementById('mandiriName').innerText = this.paymentInfo.bankMandiriName;
-    document.getElementById('danaNumber').innerText = this.paymentInfo.danaOvo;
-    document.getElementById('priceTagText').innerText = this.paymentInfo.price;
+    const modalReason = document.getElementById('paymentModalReason');
+    if (modalReason) modalReason.innerText = reason;
+
+    const bcaNum = document.getElementById('bcaNumber');
+    if (bcaNum) bcaNum.innerText = this.paymentInfo.bankBca;
+
+    const bcaNm = document.getElementById('bcaName');
+    if (bcaNm) bcaNm.innerText = this.paymentInfo.bankBcaName;
+
+    const danaNum = document.getElementById('danaNumber');
+    if (danaNum) danaNum.innerText = this.paymentInfo.danaOvo;
+
+    const priceTag = document.getElementById('priceTagText');
+    if (priceTag) priceTag.innerText = this.paymentInfo.price;
 
     const waLink = `https://wa.me/${this.paymentInfo.waAdmin}?text=${encodeURIComponent('Halo Admin ARIF SOFT, saya sudah melakukan transfer pembayaran paket VIP. Mohon bantu konfirmasi dan aktifkan akun saya.')}`;
-    document.getElementById('btnWaConfirmPayment').href = waLink;
+    const btnWa = document.getElementById('btnWaConfirmPayment');
+    if (btnWa) btnWa.href = waLink;
 
     modal.classList.add('active');
   }
