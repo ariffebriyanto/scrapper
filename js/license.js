@@ -95,14 +95,19 @@ class SubscriptionLicenseManager {
   }
 
   getRegisteredUsers() {
-    if (window.cloudDB) return window.cloudDB.getUsers();
-    const raw = localStorage.getItem(this.USERS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    let list = [];
+    if (window.cloudDB && typeof window.cloudDB.getUsers === 'function') {
+      list = window.cloudDB.getUsers();
+    } else {
+      const raw = localStorage.getItem(this.USERS_KEY);
+      try { list = raw ? JSON.parse(raw) : []; } catch (e) { list = []; }
+    }
+    return Array.isArray(list) ? list : [];
   }
 
   getCurrentUser() {
     const raw = localStorage.getItem(this.CURRENT_USER_KEY);
-    return raw ? JSON.parse(raw) : null;
+    try { return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
   }
 
   logoutUser() {

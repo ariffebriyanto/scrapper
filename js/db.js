@@ -1,84 +1,97 @@
 /**
  * ARIF SOFT - Cloud Database Sync Engine (Supabase / Firebase Realtime Integration)
- * Provides online cloud database persistence with fallback to local storage.
+ * Provides instant synchronous local storage with silent background cloud database sync.
  */
 
 class CloudDatabaseEngine {
   constructor() {
-    // Default Supabase Configuration (Free Cloud Database)
-    this.SUPABASE_URL = 'https://xyzcompany.supabase.co'; // Place your Supabase URL
+    this.SUPABASE_URL = 'https://xyzcompany.supabase.co'; // Replace with your Supabase URL
     this.SUPABASE_ANON_KEY = 'public-anon-key-placeholder';
     this.client = null;
-    
     this.init();
   }
 
   init() {
-    if (window.supabase && this.SUPABASE_URL.includes('.supabase.co')) {
+    if (window.supabase && this.SUPABASE_URL.includes('.supabase.co') && !this.SUPABASE_URL.includes('xyzcompany')) {
       try {
         this.client = window.supabase.createClient(this.SUPABASE_URL, this.SUPABASE_ANON_KEY);
-        console.log('Cloud Database Supabase Connected!');
       } catch (e) {
-        console.warn('Using LocalStorage DB fallback until Supabase credentials are configured.');
+        console.warn('Cloud DB fallback to LocalStorage.');
       }
     }
   }
 
-  // Sync Registered Users
-  async getUsers() {
-    if (this.client) {
-      try {
-        const { data, error } = await this.client.from('users').select('*');
-        if (!error && data) return data;
-      } catch (e) { console.error('Cloud DB fetch users error:', e); }
+  // Synchronous Get Users with background Cloud DB fetch
+  getUsers() {
+    let users = [];
+    try {
+      const local = localStorage.getItem('sociallead_registered_users');
+      users = local ? JSON.parse(local) : [];
+      if (!Array.isArray(users)) users = [];
+    } catch (e) {
+      users = [];
     }
-    const local = localStorage.getItem('sociallead_registered_users');
-    return local ? JSON.parse(local) : [];
+
+    if (this.client) {
+      this.client.from('users').select('*').then(({ data, error }) => {
+        if (!error && Array.isArray(data) && data.length) {
+          localStorage.setItem('sociallead_registered_users', JSON.stringify(data));
+        }
+      }).catch(() => {});
+    }
+
+    return users;
   }
 
-  async saveUser(user) {
-    // 1. Save to LocalStorage
-    const users = await this.getUsers();
-    const idx = users.findIndex(u => u.id === user.id || u.email === user.email);
+  // Save User synchronously & sync to Cloud DB
+  saveUser(user) {
+    const users = this.getUsers();
+    const idx = users.findIndex(u => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase());
     if (idx !== -1) users[idx] = user;
     else users.push(user);
     localStorage.setItem('sociallead_registered_users', JSON.stringify(users));
 
-    // 2. Sync to Supabase Cloud DB if connected
     if (this.client) {
-      try {
-        await this.client.from('users').upsert(user);
-      } catch (e) { console.error('Cloud DB save user error:', e); }
+      this.client.from('users').upsert(user).then(() => {}).catch(() => {});
     }
+
     return user;
   }
 
-  // Sync Pending Transfers
-  async getPendingTransfers() {
-    if (this.client) {
-      try {
-        const { data, error } = await this.client.from('transfers').select('*').order('created_at', { ascending: false });
-        if (!error && data) return data;
-      } catch (e) { console.error('Cloud DB fetch transfers error:', e); }
+  // Synchronous Get Transfers with background Cloud DB fetch
+  getPendingTransfers() {
+    let list = [];
+    try {
+      const local = localStorage.getItem('sociallead_pending_transfers');
+      list = local ? JSON.parse(local) : [];
+      if (!Array.isArray(list)) list = [];
+    } catch (e) {
+      list = [];
     }
-    const local = localStorage.getItem('sociallead_pending_transfers');
-    return local ? JSON.parse(local) : [];
+
+    if (this.client) {
+      this.client.from('transfers').select('*').then(({ data, error }) => {
+        if (!error && Array.isArray(data) && data.length) {
+          localStorage.setItem('sociallead_pending_transfers', JSON.stringify(data));
+        }
+      }).catch(() => {});
+    }
+
+    return list;
   }
 
-  async saveTransfer(transfer) {
-    // 1. Save to LocalStorage
-    const list = await this.getPendingTransfers();
+  // Save Transfer synchronously & sync to Cloud DB
+  saveTransfer(transfer) {
+    const list = this.getPendingTransfers();
     const idx = list.findIndex(t => t.id === transfer.id);
     if (idx !== -1) list[idx] = transfer;
     else list.unshift(transfer);
     localStorage.setItem('sociallead_pending_transfers', JSON.stringify(list));
 
-    // 2. Sync to Supabase Cloud DB if connected
     if (this.client) {
-      try {
-        await this.client.from('transfers').upsert(transfer);
-      } catch (e) { console.error('Cloud DB save transfer error:', e); }
+      this.client.from('transfers').upsert(transfer).then(() => {}).catch(() => {});
     }
+
     return transfer;
   }
 }
