@@ -41,6 +41,9 @@
         <button id="btnUserAuthNav" class="btn-secondary" style="font-size: 0.82rem; border-color: rgba(255,255,255,0.15);">
           <i class="fas fa-user-circle"></i> <span id="userAuthNavText">Daftar / Login</span>
         </button>
+        <div id="userProfileBadge" class="btn-secondary" style="font-size: 0.82rem; border-color: var(--cyan); color: var(--cyan); display: none;">
+          <i class="fas fa-user-check"></i> <span id="userProfileText">Akun Saya</span>
+        </div>
         <button id="btnUserLogoutNav" class="btn-secondary" style="font-size: 0.82rem; color: var(--danger); border-color: rgba(239,68,68,0.3); display: none;" title="Keluar Akun">
           <i class="fas fa-sign-out-alt"></i> Logout
         </button>
@@ -512,6 +515,55 @@
         </form>
       </div>
 
+    </div>
+  </div>
+
+  <!-- Modal 4: User Profile Detail Modal -->
+  <div id="profileModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 460px;">
+      <button class="modal-close" id="btnCloseProfileModal">
+        <i class="fas fa-times"></i>
+      </button>
+
+      <div style="text-align: center; margin-bottom: 1.25rem;">
+        <i class="fas fa-id-card" style="font-size: 2.8rem; color: var(--cyan);"></i>
+        <h2 style="margin-top: 0.5rem; color: white;">Profil Akun Saya</h2>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">Informasi Akun & Status Berlangganan</p>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.25rem;">
+        <div style="margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+          <div style="font-size: 0.75rem; color: var(--text-muted);">Nama Akun</div>
+          <div style="font-weight: 700; color: white; font-size: 1rem;" id="profName">-</div>
+        </div>
+
+        <div style="margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+          <div style="font-size: 0.75rem; color: var(--text-muted);">Email Terdaftar</div>
+          <div style="font-weight: 600; color: var(--cyan);" id="profEmail">-</div>
+        </div>
+
+        <div style="margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+          <div style="font-size: 0.75rem; color: var(--text-muted);">Nomor WhatsApp</div>
+          <div style="font-weight: 600; color: white;" id="profPhone">-</div>
+        </div>
+
+        <div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">Status & Masa Aktif VIP</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+            <span id="profStatusBadge" class="badge badge-fb">FREE PLAN</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted);" id="profExpireText">Belum Berlangganan</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem;">
+        <button id="btnProfUpgrade" class="btn-primary" style="flex: 1; justify-content: center; background: linear-gradient(135deg, #f59e0b, #d97706);">
+          <i class="fas fa-crown"></i> Berlangganan VIP
+        </button>
+        <button id="btnProfLogout" class="btn-secondary" style="color: var(--danger); border-color: rgba(239,68,68,0.3);">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
     </div>
   </div>
 

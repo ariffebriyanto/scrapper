@@ -133,16 +133,85 @@ class SocialLeadApp {
 
     const updateNavUserStatus = () => {
       const currUser = (window.licenseManager && window.licenseManager.getCurrentUser) ? window.licenseManager.getCurrentUser() : null;
-      const userText = document.getElementById('userAuthNavText');
-      if (currUser && userText) {
-        userText.innerText = `${currUser.name} (${currUser.status})`;
-        if (btnUserLogoutNav) btnUserLogoutNav.style.display = 'inline-flex';
+      const btnAuthNav = document.getElementById('btnUserAuthNav');
+      const profileBadge = document.getElementById('userProfileBadge');
+      const profileText = document.getElementById('userProfileText');
+      const btnLogoutNav = document.getElementById('btnUserLogoutNav');
+
+      if (currUser) {
+        // Logged In: HIDE Daftar/Login button, SHOW Profile badge & Logout button
+        if (btnAuthNav) btnAuthNav.style.display = 'none';
+        if (profileBadge) profileBadge.style.display = 'inline-flex';
+        if (profileText) profileText.innerText = `${currUser.name} (${currUser.status})`;
+        if (btnLogoutNav) btnLogoutNav.style.display = 'inline-flex';
       } else {
-        if (userText) userText.innerText = 'Daftar / Login';
-        if (btnUserLogoutNav) btnUserLogoutNav.style.display = 'none';
+        // Logged Out: SHOW Daftar/Login button, HIDE Profile badge & Logout button
+        if (btnAuthNav) btnAuthNav.style.display = 'inline-flex';
+        if (profileBadge) profileBadge.style.display = 'none';
+        if (btnLogoutNav) btnLogoutNav.style.display = 'none';
       }
     };
     updateNavUserStatus();
+
+    // User Profile Modal Handlers
+    const profileModal = document.getElementById('profileModal');
+    const btnCloseProfileModal = document.getElementById('btnCloseProfileModal');
+    const profileBadge = document.getElementById('userProfileBadge');
+
+    const openProfileModal = () => {
+      const currUser = window.licenseManager.getCurrentUser();
+      if (!currUser) return;
+
+      if (document.getElementById('profName')) document.getElementById('profName').innerText = currUser.name;
+      if (document.getElementById('profEmail')) document.getElementById('profEmail').innerText = currUser.email;
+      if (document.getElementById('profPhone')) document.getElementById('profPhone').innerText = currUser.phone || '-';
+
+      const profStatusBadge = document.getElementById('profStatusBadge');
+      const profExpireText = document.getElementById('profExpireText');
+
+      if (currUser.status === 'PRO') {
+        if (profStatusBadge) {
+          profStatusBadge.className = 'badge badge-google';
+          profStatusBadge.innerHTML = '<i class="fas fa-crown"></i> PRO VIP ACTIVE';
+        }
+        if (profExpireText) profExpireText.innerText = currUser.vipExpiresAt ? `s.d. ${currUser.vipExpiresAt}` : 'Aktif';
+      } else {
+        if (profStatusBadge) {
+          profStatusBadge.className = 'badge badge-fb';
+          profStatusBadge.innerText = 'FREE PLAN';
+        }
+        if (profExpireText) profExpireText.innerText = 'Belum Berlangganan';
+      }
+
+      if (profileModal) profileModal.classList.add('active');
+    };
+
+    if (profileBadge) profileBadge.addEventListener('click', openProfileModal);
+
+    if (btnCloseProfileModal) {
+      btnCloseProfileModal.addEventListener('click', () => {
+        if (profileModal) profileModal.classList.remove('active');
+      });
+    }
+
+    const btnProfUpgrade = document.getElementById('btnProfUpgrade');
+    if (btnProfUpgrade) {
+      btnProfUpgrade.addEventListener('click', () => {
+        if (profileModal) profileModal.classList.remove('active');
+        openUpgradeModal();
+      });
+    }
+
+    const btnProfLogout = document.getElementById('btnProfLogout');
+    if (btnProfLogout) {
+      btnProfLogout.addEventListener('click', () => {
+        if (profileModal) profileModal.classList.remove('active');
+        window.licenseManager.logoutUser();
+        this.showToast('Berhasil keluar dari akun.', 'info');
+        updateNavUserStatus();
+        this.renderTable();
+      });
+    }
 
     if (btnUserLogoutNav) {
       btnUserLogoutNav.addEventListener('click', () => {
@@ -456,6 +525,26 @@ class SocialLeadApp {
     return this.filteredLeads;
   }
 
+  maskEmail(email) {
+    if (!email || email === '-') return '-';
+    const clean = email.trim();
+    const parts = clean.split('@');
+    if (parts.length !== 2) return '*****@domain.com';
+    const user = parts[0];
+    const domain = parts[1];
+    const maskedUser = user.length <= 2 ? user.substring(0, 1) + '*****' : user.substring(0, 2) + '*****';
+    return `${maskedUser}@${domain}`;
+  }
+
+  maskPhoneNumber(phone) {
+    if (!phone || phone === '-') return '-';
+    const clean = phone.trim();
+    if (clean.length <= 6) return clean.substring(0, 3) + '*****';
+    const prefix = clean.substring(0, 6);
+    const suffix = clean.substring(clean.length - 3);
+    return `${prefix}*****${suffix}`;
+  }
+
   renderTable() {
     const tbody = document.getElementById('leadTableBody');
     if (!tbody) return;
@@ -477,6 +566,15 @@ class SocialLeadApp {
     const rows = this.filteredLeads.map((item, idx) => {
       const isChecked = this.selectedLeadIds.has(item.id);
       
+      // Email masking for FREE users
+      const rawEmail = item.email || '-';
+      const displayEmail = (!isPro && rawEmail !== '-') ? this.maskEmail(rawEmail) : rawEmail;
+
+      // Phone number masking for FREE users
+      const rawPhone = item.phone || (item.wa ? `+${item.wa}` : '-');
+      const displayPhone = (!isPro && rawPhone !== '-') ? this.maskPhoneNumber(rawPhone) : rawPhone;
+
+      // WhatsApp Chat button lock for FREE users
       let waButton = '-';
       if (item.wa) {
         if (isPro) {
@@ -489,6 +587,24 @@ class SocialLeadApp {
           waButton = `
             <button class="btn-wa-action btn-wa-locked" data-name="${item.name}">
               <i class="fas fa-lock" style="color: var(--warning);"></i> 🔒 Chat WA
+            </button>
+          `;
+        }
+      }
+
+      // Profile Link action lock for FREE users
+      let actionLink = '-';
+      if (item.url) {
+        if (isPro) {
+          actionLink = `
+            <a href="${item.url}" target="_blank" style="color: var(--primary); font-size: 0.8rem; text-decoration: none; font-weight: 600;">
+              <i class="fas fa-external-link-alt"></i> Buka Link
+            </a>
+          `;
+        } else {
+          actionLink = `
+            <button class="btn-link-locked" data-name="${item.name}" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); color: var(--text-muted); padding: 0.35rem 0.7rem; border-radius: var(--radius-md); font-size: 0.78rem; cursor: pointer; transition: var(--transition);">
+              <i class="fas fa-lock" style="color: var(--warning);"></i> 🔒 Buka Link
             </button>
           `;
         }
@@ -507,12 +623,12 @@ class SocialLeadApp {
             <div style="font-size: 0.75rem; color: var(--text-muted);">${item.handle} • ${item.followers || ''}</div>
           </td>
           <td>
-            <span style="font-weight: 600; color: ${item.email !== '-' ? 'var(--cyan)' : 'var(--text-dim)'};">
-              ${item.email}
+            <span style="font-weight: 600; color: ${!isPro ? 'var(--warning)' : (item.email !== '-' ? 'var(--cyan)' : 'var(--text-dim)')};">
+              ${displayEmail}
             </span>
           </td>
           <td>
-            <div>${item.phone || '-'}</div>
+            <div style="font-weight: 600; color: ${!isPro ? 'var(--warning)' : 'white'};">${displayPhone}</div>
             <div style="margin-top: 0.2rem;">${waButton}</div>
           </td>
           <td>
@@ -521,9 +637,7 @@ class SocialLeadApp {
             </div>
           </td>
           <td>
-            <a href="${item.url}" target="_blank" style="color: var(--primary); font-size: 0.8rem; text-decoration: none;">
-              <i class="fas fa-external-link-alt"></i> Buka Link
-            </a>
+            ${actionLink}
           </td>
         </tr>
       `;
@@ -531,7 +645,7 @@ class SocialLeadApp {
 
     tbody.innerHTML = rows;
 
-    // Attach individual checkbox listeners & locked WA listeners
+    // Attach individual checkbox listeners & locked WA / Link listeners
     tbody.querySelectorAll('.lead-checkbox').forEach(chk => {
       chk.addEventListener('change', (e) => {
         const id = e.target.dataset.id;
@@ -546,6 +660,15 @@ class SocialLeadApp {
         const leadName = btn.dataset.name || 'Lead';
         window.licenseManager.openPaymentModal(`Fitur Direct Chat WA (${leadName}) Terkunci! Silakan Berlangganan PRO VIP.`);
         this.showToast('Fitur Direct Chat WA Terkunci! Silakan berlangganan untuk akses kontak.', 'warning');
+      });
+    });
+
+    tbody.querySelectorAll('.btn-link-locked').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const leadName = btn.dataset.name || 'Lead';
+        window.licenseManager.openPaymentModal(`Link Profil Target (${leadName}) Terkunci! Silakan Berlangganan PRO VIP.`);
+        this.showToast('Link Profil Target Terkunci untuk Pengguna Free! Silakan berlangganan PRO VIP.', 'warning');
       });
     });
   }
