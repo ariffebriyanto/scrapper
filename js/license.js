@@ -83,14 +83,19 @@ class SubscriptionLicenseManager {
       vipExpiresAt: null
     };
 
-    users.push(newUser);
-    localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
+    if (window.cloudDB) window.cloudDB.saveUser(newUser);
+    else {
+      users.push(newUser);
+      localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
+    }
+
     localStorage.setItem(this.CURRENT_USER_KEY, JSON.stringify(newUser));
     this.updateUI();
     return { success: true, user: newUser, isNew: true, message: `Pendaftaran berhasil! Akun Anda berstatus FREE PLAN.` };
   }
 
   getRegisteredUsers() {
+    if (window.cloudDB) return window.cloudDB.getUsers();
     const raw = localStorage.getItem(this.USERS_KEY);
     return raw ? JSON.parse(raw) : [];
   }
