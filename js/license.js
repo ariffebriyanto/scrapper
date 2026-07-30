@@ -42,6 +42,27 @@ class SubscriptionLicenseManager {
     this.updateUI();
   }
 
+  loginUser(identity) {
+    if (!identity) return { success: false, message: 'Silakan masukkan Email atau No. WhatsApp Anda!' };
+    const cleanId = identity.trim().toLowerCase();
+    const users = this.getRegisteredUsers();
+    
+    const user = users.find(u => 
+      u.email.toLowerCase() === cleanId || 
+      (u.phone && u.phone.replace(/[^0-9]/g, '') === cleanId.replace(/[^0-9]/g, ''))
+    );
+
+    if (user) {
+      localStorage.setItem(this.CURRENT_USER_KEY, JSON.stringify(user));
+      this.status = user.status || 'FREE';
+      localStorage.setItem(this.STORAGE_KEY, this.status);
+      this.updateUI();
+      return { success: true, user: user, message: `Selamat datang kembali, ${user.name} (${user.status})!` };
+    }
+
+    return { success: false, message: 'Akun tidak ditemukan. Silakan klik tab "Daftar Akun Baru".' };
+  }
+
   registerUser(name, email, phone) {
     const users = this.getRegisteredUsers();
     const existing = users.find(u => u.email.toLowerCase() === email.toLowerCase());
@@ -122,15 +143,7 @@ class SubscriptionLicenseManager {
 
   getPendingTransfers() {
     const raw = localStorage.getItem(this.PENDING_TRANSPERS_KEY);
-    if (!raw) {
-      // Seed initial sample request for demonstration
-      const sample = [
-        { id: 'tr-1', name: 'Budi Santoso', phone: '081299887766', planKey: '1_year', planName: '1 Tahun (Paling Hemat)', amount: 'Rp 1.000.000', date: new Date().toLocaleString('id-ID'), status: 'PENDING' }
-      ];
-      localStorage.setItem(this.PENDING_TRANSPERS_KEY, JSON.stringify(sample));
-      return sample;
-    }
-    return JSON.parse(raw);
+    return raw ? JSON.parse(raw) : [];
   }
 
   addPendingTransfer(userName = 'Pembeli Baru', userPhone = '-', planKey = '1_year') {

@@ -450,39 +450,68 @@
     </div>
   </div>
 
-  <!-- Modal 3: Form Pendaftaran Akun Pengguna Baru -->
+  <!-- Modal 3: Form Auth (Login / Register Dual Mode) -->
   <div id="registerModal" class="modal-backdrop">
     <div class="modal-card" style="max-width: 440px;">
       <button class="modal-close" id="btnCloseRegisterModal">
         <i class="fas fa-times"></i>
       </button>
 
-      <div style="text-align: center; margin-bottom: 1.25rem;">
-        <i class="fas fa-user-plus" style="font-size: 2.5rem; color: var(--cyan);"></i>
-        <h2 style="margin-top: 0.5rem; color: white;">Pendaftaran Akun Baru</h2>
-        <p style="font-size: 0.8rem; color: var(--text-muted);">Daftar akun gratis. Status awal otomatis FREE PLAN.</p>
+      <!-- Auth Tabs Switcher -->
+      <div style="display: flex; background: rgba(0,0,0,0.4); border-radius: var(--radius-md); padding: 0.3rem; margin-bottom: 1.25rem; border: 1px solid var(--border-glass);">
+        <button id="tabAuthLoginBtn" type="button" class="btn-secondary" style="flex: 1; justify-content: center; background: var(--primary); color: white; border: none; font-size: 0.85rem;">
+          <i class="fas fa-sign-in-alt"></i> Masuk / Login
+        </button>
+        <button id="tabAuthRegisterBtn" type="button" class="btn-secondary" style="flex: 1; justify-content: center; background: transparent; color: var(--text-muted); border: none; font-size: 0.85rem;">
+          <i class="fas fa-user-plus"></i> Daftar Akun Baru
+        </button>
       </div>
 
-      <form id="registerForm">
-        <div class="form-group">
-          <label class="form-label" for="regName">Nama Lengkap / Nama Bisnis</label>
-          <input type="text" id="regName" class="form-input" placeholder="Contoh: Budi Santoso" required>
+      <!-- Tab 1: Form Login Akun Lama -->
+      <div id="authLoginSection">
+        <div style="text-align: center; margin-bottom: 1rem;">
+          <h2 style="color: white; font-size: 1.2rem;">Selamat Datang Kembali</h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Masukkan Email atau No WA terdaftar Anda untuk masuk</p>
         </div>
+        <form id="loginForm">
+          <div class="form-group">
+            <label class="form-label" for="loginIdentityInput">Email atau No. WhatsApp Terdaftar</label>
+            <input type="text" id="loginIdentityInput" class="form-input" placeholder="Contoh: budi@gmail.com atau 081234567890" required>
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 0.5rem;">
+            <i class="fas fa-arrow-right"></i> Masuk Ke Akun Saya
+          </button>
+        </form>
+      </div>
 
-        <div class="form-group">
-          <label class="form-label" for="regEmail">Alamat Email</label>
-          <input type="email" id="regEmail" class="form-input" placeholder="Contoh: budi@gmail.com" required>
+      <!-- Tab 2: Form Register Akun Baru -->
+      <div id="authRegisterSection" style="display: none;">
+        <div style="text-align: center; margin-bottom: 1rem;">
+          <h2 style="color: white; font-size: 1.2rem;">Pendaftaran Akun Baru</h2>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">Daftar akun gratis. Status awal otomatis FREE PLAN.</p>
         </div>
+        <form id="registerForm">
+          <div class="form-group">
+            <label class="form-label" for="regName">Nama Lengkap / Nama Bisnis</label>
+            <input type="text" id="regName" class="form-input" placeholder="Contoh: Budi Santoso" required>
+          </div>
 
-        <div class="form-group">
-          <label class="form-label" for="regPhone">Nomor WhatsApp</label>
-          <input type="text" id="regPhone" class="form-input" placeholder="Contoh: 081234567890" required>
-        </div>
+          <div class="form-group">
+            <label class="form-label" for="regEmail">Alamat Email</label>
+            <input type="email" id="regEmail" class="form-input" placeholder="Contoh: budi@gmail.com" required>
+          </div>
 
-        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 0.5rem;">
-          <i class="fas fa-check-circle"></i> Daftar Akun (Status: FREE)
-        </button>
-      </form>
+          <div class="form-group">
+            <label class="form-label" for="regPhone">Nomor WhatsApp</label>
+            <input type="text" id="regPhone" class="form-input" placeholder="Contoh: 081234567890" required>
+          </div>
+
+          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 0.5rem;">
+            <i class="fas fa-check-circle"></i> Buat Akun Baru (Status: FREE)
+          </button>
+        </form>
+      </div>
+
     </div>
   </div>
 

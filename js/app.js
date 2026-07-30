@@ -100,11 +100,36 @@ class SocialLeadApp {
       });
     }
 
-    // User Account Register & Logout Handlers
+    // User Account Register & Login Handlers
     const btnUserAuthNav = document.getElementById('btnUserAuthNav');
     const btnUserLogoutNav = document.getElementById('btnUserLogoutNav');
     const registerModal = document.getElementById('registerModal');
     const btnCloseRegisterModal = document.getElementById('btnCloseRegisterModal');
+
+    const tabLoginBtn = document.getElementById('tabAuthLoginBtn');
+    const tabRegisterBtn = document.getElementById('tabAuthRegisterBtn');
+    const loginSection = document.getElementById('authLoginSection');
+    const registerSection = document.getElementById('authRegisterSection');
+
+    if (tabLoginBtn && tabRegisterBtn) {
+      tabLoginBtn.addEventListener('click', () => {
+        tabLoginBtn.style.background = 'var(--primary)';
+        tabLoginBtn.style.color = 'white';
+        tabRegisterBtn.style.background = 'transparent';
+        tabRegisterBtn.style.color = 'var(--text-muted)';
+        if (loginSection) loginSection.style.display = 'block';
+        if (registerSection) registerSection.style.display = 'none';
+      });
+
+      tabRegisterBtn.addEventListener('click', () => {
+        tabRegisterBtn.style.background = 'var(--primary)';
+        tabRegisterBtn.style.color = 'white';
+        tabLoginBtn.style.background = 'transparent';
+        tabLoginBtn.style.color = 'var(--text-muted)';
+        if (registerSection) registerSection.style.display = 'block';
+        if (loginSection) loginSection.style.display = 'none';
+      });
+    }
 
     const updateNavUserStatus = () => {
       const currUser = (window.licenseManager && window.licenseManager.getCurrentUser) ? window.licenseManager.getCurrentUser() : null;
@@ -125,6 +150,27 @@ class SocialLeadApp {
         this.showToast('Berhasil keluar dari akun.', 'info');
         updateNavUserStatus();
         this.renderTable();
+      });
+    }
+
+    // Login Form Handler
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+      loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const identity = document.getElementById('loginIdentityInput').value.trim();
+        const res = window.licenseManager.loginUser(identity);
+        if (res.success) {
+          this.showToast(res.message, 'success');
+          if (registerModal) registerModal.classList.remove('active');
+          updateNavUserStatus();
+          this.renderTable();
+          if (res.user.status === 'FREE') {
+            setTimeout(() => openUpgradeModal(), 300);
+          }
+        } else {
+          this.showToast(res.message, 'error');
+        }
       });
     }
 
@@ -153,9 +199,10 @@ class SocialLeadApp {
 
       // Step 2: If user is registered but FREE, open Payment Modal with user details pre-filled
       if (!window.licenseManager.isPro()) {
-        window.licenseManager.openPaymentModal(`Form Berlangganan VIP untuk Akun: ${currUser.name}`);
-        if (document.getElementById('userSubmitName')) document.getElementById('userSubmitName').value = currUser.name;
-        if (document.getElementById('userSubmitPhone')) document.getElementById('userSubmitPhone').value = currUser.phone;
+        const titleText = currUser ? `Form Berlangganan VIP untuk Akun: ${currUser.name}` : 'Form Berlangganan VIP';
+        window.licenseManager.openPaymentModal(titleText);
+        if (document.getElementById('userSubmitName')) document.getElementById('userSubmitName').value = currUser ? currUser.name : '';
+        if (document.getElementById('userSubmitPhone')) document.getElementById('userSubmitPhone').value = currUser ? currUser.phone : '';
       } else {
         this.showToast(`Akun ${currUser.name} Sudah Berstatus PRO VIP Active!`, 'success');
       }
