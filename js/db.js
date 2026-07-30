@@ -5,18 +5,19 @@
 
 class CloudDatabaseEngine {
   constructor() {
-    this.SUPABASE_URL = 'https://xyzcompany.supabase.co'; // Replace with your Supabase URL
-    this.SUPABASE_ANON_KEY = 'public-anon-key-placeholder';
+    this.SUPABASE_URL = 'https://ghmvrqstyjtriglrtxvf.supabase.co';
+    this.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdobXZycXN0eWp0cmxnbHJ0eHZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzNDU3MTYsImV4cCI6MjEwMDkyMTcxNn0.rerh4jB0WPmZl-n_tFu-r-k_g3q1o3j2kWdWpdsFA4w';
     this.client = null;
     this.init();
   }
 
   init() {
-    if (window.supabase && this.SUPABASE_URL.includes('.supabase.co') && !this.SUPABASE_URL.includes('xyzcompany')) {
+    if (window.supabase && this.SUPABASE_URL && !this.SUPABASE_ANON_KEY.includes('placeholder')) {
       try {
         this.client = window.supabase.createClient(this.SUPABASE_URL, this.SUPABASE_ANON_KEY);
+        console.log('✅ Supabase Cloud Database Terhubung!');
       } catch (e) {
-        console.warn('Cloud DB fallback to LocalStorage.');
+        console.warn('Cloud DB fallback to LocalStorage:', e);
       }
     }
   }
